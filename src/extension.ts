@@ -70,24 +70,22 @@ export function activate(context: vscode.ExtensionContext) {
 			return {
 				onDidSendMessage: message => {
 					const command = message?.command;
+					const event = message?.event;
 
-					if (command === 'pause') {
+					if (command === 'pause' || event === 'stopped') {
 						currentDebugStatus = DebugStatus.paused;
 						updateStatusBar();
 					} else if (command === 'continue') {
-						currentDebugStatus = DebugStatus.running;
-						updateStatusBar();
+						if (currentDebugStatus === DebugStatus.paused) {
+							currentDebugStatus = DebugStatus.running;
+							updateStatusBar();
+						}
 					} else if (command === 'configurationDone') {
 						if (currentDebugStatus === DebugStatus.starting) {
 							currentDebugStatus = DebugStatus.running;
 							updateStatusBar();
 						}
-					} else if (command) {
-						console.log('->', command);
 					}
-					// stepIn
-					// stepOut
-					// next
 				},
 			};
 		}
