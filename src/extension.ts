@@ -13,6 +13,7 @@ import * as vscode from 'vscode';
 // TODO: allow to defined if the buttons go on left or right
 // TODO: write readme
 // TODO: add license
+// TODO: configure prettify and auto formatting
 
 const basePriority = 20;
 const startDebugPriority = basePriority;
@@ -95,66 +96,94 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {}
 
+const createStatusItem = (context: vscode.ExtensionContext, priority: number, option: Option) => {
+	const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority);
+	statusBar.text = `$(${option.icon})` + (option.text ? ` ${option.text}` : '');
+	statusBar.command = option.commandId;
+
+	if (option.colorId) {
+		statusBar.color = new vscode.ThemeColor(option.colorId);
+	} else if (option.rawColor) {
+		statusBar.color = option.rawColor;
+	}
+
+	context.subscriptions.push(statusBar);
+
+	return statusBar;
+};
+
 const createStatusBarItems = (context: vscode.ExtensionContext) => {
 
-	const createStatusItem = (option: Option, priority: number) => {
-		const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, priority);
-		statusBar.text = `$(${option.icon})` + (option.text ? ` ${option.text}` : '');
-		statusBar.command = option.commandId;
-
-		if (option.colorId) {
-			statusBar.color = new vscode.ThemeColor(option.colorId);
-		} else if (option.rawColor) {
-			statusBar.color = option.rawColor;
+	startDebugStatusBarItem = createStatusItem(
+		context,
+		startDebugPriority,
+		{
+			commandId: 'workbench.action.debug.start',
+			icon: 'debug-start',
+			text: 'Start debugging',
+			colorId: 'debugIcon.startForeground'
 		}
+	);
 
-		context.subscriptions.push(statusBar);
+	startingDebugStatusBarItem = createStatusItem(
+		context,
+		startDebugPriority,
+		{
+			icon: 'sync~spin',
+			text: 'Starting debug session...',
+			colorId: 'debugIcon.startForeground'
+		}
+	);
 
-		return statusBar;
-	};
+	continueDebugStatusBarItem = createStatusItem(
+		context,
+		pauseContinuePriority,
+		{
+			commandId: 'workbench.action.debug.continue',
+			icon: 'debug-continue',
+			colorId: 'debugIcon.continueForeground'
+		}
+	);
 
-	startDebugStatusBarItem = createStatusItem({
-		commandId: 'workbench.action.debug.start',
-		icon: 'debug-start',
-		text: 'Start debugging',
-		colorId: 'debugIcon.startForeground'
-	}, startDebugPriority);
+	pauseDebugStatusBarItem = createStatusItem(
+		context,
+		pauseContinuePriority,
+		{
+			commandId: 'workbench.action.debug.pause',
+			icon: 'debug-pause',
+			colorId: 'debugIcon.pauseForeground'
+		}
+	);
 
-	startingDebugStatusBarItem = createStatusItem({
-		icon: 'sync~spin',
-		text: 'Starting debug session...',
-		colorId: 'debugIcon.startForeground'
-	}, startDebugPriority);
+	hotReloadDebugStatusBarItem = createStatusItem(
+		context,
+		hotReloadPriority,
+		{
+			commandId: 'flutter.hotReload',
+			icon: 'zap',
+			rawColor: 'yellow'
+		}
+	);
 
-	continueDebugStatusBarItem = createStatusItem({
-		commandId: 'workbench.action.debug.continue',
-		icon: 'debug-continue',
-		colorId: 'debugIcon.continueForeground'
-	}, pauseContinuePriority);
+	restartDebugStatusBarItem = createStatusItem(
+		context,
+		restartPriority,
+		{
+			commandId: 'workbench.action.debug.restart',
+			icon: 'debug-restart',
+			colorId: 'debugIcon.restartForeground'
+		}
+	);
 
-	pauseDebugStatusBarItem = createStatusItem({
-		commandId: 'workbench.action.debug.pause',
-		icon: 'debug-pause',
-		colorId: 'debugIcon.pauseForeground'
-	}, pauseContinuePriority);
-
-	hotReloadDebugStatusBarItem = createStatusItem({
-		commandId: 'flutter.hotReload',
-		icon: 'zap',
-		rawColor: 'yellow'
-	}, hotReloadPriority);
-
-	restartDebugStatusBarItem = createStatusItem({
-		commandId: 'workbench.action.debug.restart',
-		icon: 'debug-restart',
-		colorId: 'debugIcon.restartForeground'
-	}, restartPriority);
-
-	stopDebugStatusBarItem = createStatusItem({
-		commandId: 'workbench.action.debug.stop',
-		icon: 'debug-stop',
-		colorId: 'debugIcon.stopForeground',
-	}, stopPriority);
+	stopDebugStatusBarItem = createStatusItem(
+		context,
+		stopPriority,
+		{
+			commandId: 'workbench.action.debug.stop',
+			icon: 'debug-stop',
+			colorId: 'debugIcon.stopForeground',
+		}
+	);
 };
 
 const updateIsOnDartEnvironment = (uri?: vscode.Uri) => {
