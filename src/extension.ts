@@ -12,6 +12,7 @@ import * as vscode from 'vscode';
 // TODO: allow to defined if the buttons go on left or right
 // TODO: write readme
 // TODO: add license
+// TODO: show the continue button if paused
 
 const basePriority = 20;
 
