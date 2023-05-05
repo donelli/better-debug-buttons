@@ -14,9 +14,14 @@ import * as vscode from 'vscode';
 // TODO: add license
 
 const basePriority = 20;
+const startDebugPriority = basePriority;
+const pauseContinuePriority = basePriority;
+const hotReloadPriority = basePriority - 1;
+const restartPriority = basePriority - 2;
+const stopPriority = basePriority - 3;
 
 interface Option {
-	commandId: string
+	commandId?: string
 	icon: string
 	colorId?: string,
 	rawColor?: string
@@ -110,44 +115,43 @@ const createStatusBarItems = (context: vscode.ExtensionContext) => {
 		icon: 'debug-start',
 		text: 'Start debugging',
 		colorId: 'debugIcon.startForeground'
-	}, basePriority);
+	}, startDebugPriority);
 
 	startingDebugStatusBarItem = createStatusItem({
-		commandId: '',
 		icon: 'sync~spin',
 		text: 'Starting debug session...',
 		colorId: 'debugIcon.startForeground'
-	}, basePriority);
+	}, startDebugPriority);
 
 	continueDebugStatusBarItem = createStatusItem({
 		commandId: 'workbench.action.debug.continue',
 		icon: 'debug-continue',
 		colorId: 'debugIcon.continueForeground'
-	}, basePriority);
+	}, pauseContinuePriority);
 
 	pauseDebugStatusBarItem = createStatusItem({
 		commandId: 'workbench.action.debug.pause',
 		icon: 'debug-pause',
 		colorId: 'debugIcon.pauseForeground'
-	}, basePriority);
+	}, pauseContinuePriority);
 
 	hotReloadDebugStatusBarItem = createStatusItem({
 		commandId: 'flutter.hotReload',
 		icon: 'zap',
 		rawColor: 'yellow'
-	}, basePriority - 1);
+	}, hotReloadPriority);
 
 	restartDebugStatusBarItem = createStatusItem({
 		commandId: 'workbench.action.debug.restart',
 		icon: 'debug-restart',
 		colorId: 'debugIcon.restartForeground'
-	}, basePriority - 2);
+	}, restartPriority);
 
 	stopDebugStatusBarItem = createStatusItem({
 		commandId: 'workbench.action.debug.stop',
 		icon: 'debug-stop',
 		colorId: 'debugIcon.stopForeground',
-	}, basePriority - 3);
+	}, stopPriority);
 };
 
 const updateStatusBar = () => {
