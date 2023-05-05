@@ -12,7 +12,6 @@ import * as vscode from 'vscode';
 // TODO: allow to defined if the buttons go on left or right
 // TODO: write readme
 // TODO: add license
-// TODO: show the continue button if paused
 
 const basePriority = 20;
 
@@ -24,19 +23,66 @@ interface Option {
 	text?: string
 }
 
+enum DebugStatus {
+	notStarted,
+	starting,
+	paused,
+	running,
+}
+
 let startDebugStatusBarItem: vscode.StatusBarItem;
+let startingDebugStatusBarItem: vscode.StatusBarItem;
+
+let continueDebugStatusBarItem: vscode.StatusBarItem;
 let pauseDebugStatusBarItem: vscode.StatusBarItem;
 let restartDebugStatusBarItem: vscode.StatusBarItem;
 let hotReloadDebugStatusBarItem: vscode.StatusBarItem;
 let stopDebugStatusBarItem: vscode.StatusBarItem;
 
+let currentDebugStatus: DebugStatus = DebugStatus.notStarted;
+
 export function activate(context: vscode.ExtensionContext) {
 	createStatusBarItems(context);
 	
-	showDebugNotActiveStatusItems();
+	updateStatusBar();
 
-	context.subscriptions.push(vscode.debug.onDidStartDebugSession(showDebugActiveStatusItems));
-	context.subscriptions.push(vscode.debug.onDidTerminateDebugSession(showDebugNotActiveStatusItems));
+	context.subscriptions.push(vscode.debug.onDidStartDebugSession(() => {
+		currentDebugStatus = DebugStatus.starting;
+		updateStatusBar();
+	}));
+
+	context.subscriptions.push(vscode.debug.onDidTerminateDebugSession(() => {
+		currentDebugStatus = DebugStatus.notStarted;
+		updateStatusBar();
+	}));
+
+	vscode.debug.registerDebugAdapterTrackerFactory('*', {
+		createDebugAdapterTracker(session: vscode.DebugSession) {
+			return {
+				onDidSendMessage: message => {
+					const command = message?.command;
+
+					if (command === 'pause') {
+						currentDebugStatus = DebugStatus.paused;
+						updateStatusBar();
+					} else if (command === 'continue') {
+						currentDebugStatus = DebugStatus.running;
+						updateStatusBar();
+					} else if (command === 'configurationDone') {
+						if (currentDebugStatus === DebugStatus.starting) {
+							currentDebugStatus = DebugStatus.running;
+							updateStatusBar();
+						}
+					} else if (command) {
+						console.log('->', command);
+					}
+					// stepIn
+					// stepOut
+					// next
+				},
+			};
+		}
+	});
 }
 
 export function deactivate() {}
@@ -66,6 +112,19 @@ const createStatusBarItems = (context: vscode.ExtensionContext) => {
 		colorId: 'debugIcon.startForeground'
 	}, basePriority);
 
+	startingDebugStatusBarItem = createStatusItem({
+		commandId: '',
+		icon: 'sync~spin',
+		text: 'Starting debug session...',
+		colorId: 'debugIcon.startForeground'
+	}, basePriority);
+
+	continueDebugStatusBarItem = createStatusItem({
+		commandId: 'workbench.action.debug.continue',
+		icon: 'debug-continue',
+		colorId: 'debugIcon.continueForeground'
+	}, basePriority);
+
 	pauseDebugStatusBarItem = createStatusItem({
 		commandId: 'workbench.action.debug.pause',
 		icon: 'debug-pause',
@@ -91,20 +150,36 @@ const createStatusBarItems = (context: vscode.ExtensionContext) => {
 	}, basePriority - 3);
 };
 
-const showDebugActiveStatusItems = () => {
-	startDebugStatusBarItem.hide();
+const updateStatusBar = () => {
+	if (currentDebugStatus === DebugStatus.notStarted || currentDebugStatus === DebugStatus.starting) {
+		pauseDebugStatusBarItem.hide();
+		hotReloadDebugStatusBarItem.hide();
+		restartDebugStatusBarItem.hide();
+		stopDebugStatusBarItem.hide();
 
-	pauseDebugStatusBarItem.show();
+		if (currentDebugStatus === DebugStatus.notStarted) {
+			startingDebugStatusBarItem.hide();
+			startDebugStatusBarItem.show();
+		} else {
+			startingDebugStatusBarItem.show();
+			startDebugStatusBarItem.hide();
+		}
+		
+		return;
+	}
+
+	startDebugStatusBarItem.hide();
+	startingDebugStatusBarItem.hide();
+
+	if (currentDebugStatus === DebugStatus.paused) {
+		continueDebugStatusBarItem.show();
+		pauseDebugStatusBarItem.hide();
+	} else {
+		continueDebugStatusBarItem.hide();
+		pauseDebugStatusBarItem.show();
+	}
+
 	hotReloadDebugStatusBarItem.show();
 	restartDebugStatusBarItem.show();
 	stopDebugStatusBarItem.show();
-};
-
-const showDebugNotActiveStatusItems = () => {
-	pauseDebugStatusBarItem.hide();
-	hotReloadDebugStatusBarItem.hide();
-	restartDebugStatusBarItem.hide();
-	stopDebugStatusBarItem.hide();
-
-	startDebugStatusBarItem.show();
 };
