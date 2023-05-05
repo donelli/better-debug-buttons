@@ -1,14 +1,15 @@
 
+import { existsSync } from 'fs';
+import { join } from 'path';
 import * as vscode from 'vscode';
 
 // TODO: allow the user to defined which buttons he want
-// TODO: hide hot restart button for non flutter env
 // TODO: allow to choose the color of the buttons: `According to debug theme` or `According to status bar theme`
 // TODO: message saying that he needs to hide the default debug floating buttons (only in the first time?)
 // TODO: add step into button
 // TODO: add step out button
 // TODO: add step over button
-// TODO: add the `Open devtools` button o flutter projects
+// TODO: add the `Open devtools` button o dart or flutter projects ????
 // TODO: allow to defined if the buttons go on left or right
 // TODO: write readme
 // TODO: add license
@@ -45,15 +46,17 @@ let hotReloadDebugStatusBarItem: vscode.StatusBarItem;
 let stopDebugStatusBarItem: vscode.StatusBarItem;
 
 let currentDebugStatus: DebugStatus = DebugStatus.notStarted;
+let isOnDartEnvironment = false;
 
 export function activate(context: vscode.ExtensionContext) {
 	createStatusBarItems(context);
 	
 	updateStatusBar();
 
-	context.subscriptions.push(vscode.debug.onDidStartDebugSession(() => {
+	context.subscriptions.push(vscode.debug.onDidStartDebugSession((e) => {
 		currentDebugStatus = DebugStatus.starting;
 		updateStatusBar();
+		updateIsOnDartEnvironment(e.workspaceFolder?.uri);
 	}));
 
 	context.subscriptions.push(vscode.debug.onDidTerminateDebugSession(() => {
@@ -154,6 +157,19 @@ const createStatusBarItems = (context: vscode.ExtensionContext) => {
 	}, stopPriority);
 };
 
+const updateIsOnDartEnvironment = (uri?: vscode.Uri) => {
+	let newIsOnDartEnvironment = false;
+	if (uri) {
+		const pubspecUrl = join(uri.path, 'pubspec.yaml');
+		newIsOnDartEnvironment =  existsSync(pubspecUrl);
+	}
+
+	if (newIsOnDartEnvironment !== isOnDartEnvironment) {
+		isOnDartEnvironment = newIsOnDartEnvironment;
+		updateStatusBar();
+	}
+};
+
 const updateStatusBar = () => {
 	if (currentDebugStatus === DebugStatus.notStarted || currentDebugStatus === DebugStatus.starting) {
 		pauseDebugStatusBarItem.hide();
@@ -183,7 +199,12 @@ const updateStatusBar = () => {
 		pauseDebugStatusBarItem.show();
 	}
 
-	hotReloadDebugStatusBarItem.show();
+	if (isOnDartEnvironment) {
+		hotReloadDebugStatusBarItem.show();
+	} else {
+		hotReloadDebugStatusBarItem.hide();
+	}
+	
 	restartDebugStatusBarItem.show();
 	stopDebugStatusBarItem.show();
 };
