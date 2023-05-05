@@ -1,7 +1,19 @@
 
 import * as vscode from 'vscode';
 
-const basePriority = 20; //10000000;
+// TODO: allow the user to defined which buttons he want
+// TODO: hide hot restart button for non flutter env
+// TODO: allow to choose the color of the buttons: `According to debug theme` or `According to status bar theme`
+// TODO: message saying that he needs to hide the default debug floating buttons (only in the first time?)
+// TODO: add step into button
+// TODO: add step out button
+// TODO: add step over button
+// TODO: add the `Open devtools` button o flutter projects
+// TODO: allow to defined if the buttons go on left or right
+// TODO: write readme
+// TODO: add license
+
+const basePriority = 20;
 
 interface Option {
 	commandId: string
