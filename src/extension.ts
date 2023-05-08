@@ -200,6 +200,7 @@ const updateIsOnDartEnvironment = (uri?: vscode.Uri) => {
 const updateStatusBar = () => {
 	if (currentDebugStatus === DebugStatus.notStarted || currentDebugStatus === DebugStatus.starting) {
 		pauseDebugStatusBarItem.hide();
+		continueDebugStatusBarItem.hide();
 		hotReloadDebugStatusBarItem.hide();
 		restartDebugStatusBarItem.hide();
 		stopDebugStatusBarItem.hide();
